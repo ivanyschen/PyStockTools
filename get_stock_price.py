@@ -3,7 +3,7 @@ import re
 import requests
 
 
-API_KEY = '8GMLYJVMKBNC8JJI'
+API_KEY =
 
 def get_daily_price(symbol, outputsize='compact'):
     url = (
