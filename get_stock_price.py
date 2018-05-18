@@ -1,9 +1,11 @@
 import pandas as pd
 import re
 import requests
+from bs4 import BeautifulSoup
 
+import config
 
-API_KEY =
+API_KEY = config.ALPHAVANTAGE_API_KEY
 
 def get_daily_price(symbol, outputsize='compact'):
     url = (
@@ -59,4 +61,5 @@ def get_dividend_info(symbol):
     df['decldate'] = pd.to_datetime(df['decldate'], errors='coerce', format='%m/%d/%Y')
     df['recdate'] = pd.to_datetime(df['recdate'], errors='coerce', format='%m/%d/%Y')
     df['paydate'] = pd.to_datetime(df['paydate'], errors='coerce', format='%m/%d/%Y')
+    df.sort_index(inplace=True)
     return df
