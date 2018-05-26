@@ -112,10 +112,12 @@ def get_earning_history(symbol):
     df[['estimate', 'reported']] = df[['estimate', 'reported']].apply(lambda x: x.str.replace('$', ''))
     df['surprise_per'] = df['surprise_per'].apply(lambda x: x.replace('%', ''))
     num_col = ['estimate', 'reported', 'surprise', 'surprise_per']
-    df[num_col] = df[num_col].apply(pd.to_numeric)
+    df[num_col] = df[num_col].apply(pd.to_numeric, errors='coerce’')
     df['quarter'] = df['period'].apply(lambda d: d.month)
-    df.loc[data['quarter'] == 3, 'quarter'] = 1
-    df.loc[data['quarter'] == 6, 'quarter'] = 2
-    df.loc[data['quarter'] == 9, 'quarter'] = 3
-    df.loc[data['quarter'] == 12, 'quarter'] = 4
+    df.loc[df['quarter'] == 3, 'quarter'] = 1
+    df.loc[df['quarter'] == 6, 'quarter'] = 2
+    df.loc[df['quarter'] == 9, 'quarter'] = 3
+    df.loc[df['quarter'] == 12, 'quarter'] = 4
+    
+    df['year'] = df['period'].apply(lambda d: d.year)
     return df
