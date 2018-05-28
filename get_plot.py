@@ -45,12 +45,13 @@ def make_price_plot(dataframe, symbol='', add_div=True):
             color='maroon', 
             legend='Dividend', 
             muted_alpha=0.2, 
+            size=5,
             name='div'
         )
         dividend_hover = HoverTool(
             renderers=[dividend], 
             tooltips=[
-                ("dividend amount: ", "@amount"),
+                ("dividend amount: ", "@div_amount"),
             ]
         )
         plot.add_tools(dividend_hover)
@@ -62,6 +63,42 @@ def make_price_plot(dataframe, symbol='', add_div=True):
     plot.ygrid.band_fill_color = "olive"
     plot.ygrid.band_fill_alpha = 0.1
     plot.legend.click_policy= "mute"
+    return plot
+
+def make_div_plot(dataframe, symbol=''):
+    source = ColumnDataSource(dataframe)
+    booleans = [not np.isnan(amount) for amount in source.data['div_amount']]
+    div_view = CDSView(source=source, filters=[BooleanFilter(booleans)])
+    plot = figure(
+        x_axis_type='datetime',
+        plot_height=500,
+        plot_width=1000,
+    )
+    div_circle = plot.circle(
+        x='index', 
+        y='div_amount', 
+        source=source, 
+        view=div_view,
+        name='Divident Amount',
+        size=7.5,
+        color='maroon',
+    )
+    hover = HoverTool(
+        renderers=[div_circle], 
+        tooltips=[
+            ("ex_date", "@decldate{%F}"),
+            ("amount", "@div_amount")],
+        formatters={
+            "ex_date": 'datetime',
+        }
+    )
+    plot.add_tools(hover)
+    plot.title.text = f"{symbol.upper()} Dividend History" if symbol else "Dividend History" 
+    plot.legend.location = "top_left"
+    plot.xaxis.axis_label = 'Date'
+    plot.yaxis.axis_label = 'Dividend Amount'
+    plot.ygrid.band_fill_color = "olive"
+    plot.ygrid.band_fill_alpha = 0.1
     return plot
 
 def make_earning_plot(dataframe, symbol=''):
