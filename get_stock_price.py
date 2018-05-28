@@ -16,18 +16,20 @@ options = Options()
 options.set_headless()
 WEBDRIVER = webdriver.Chrome(WEBDRIVER_PATH, options=options)
 
-def get_daily_price(symbol, outputsize='compact'):
+def get_daily_price(symbol, outputsize='compact', with_div=True):
     url = (
         f'https://www.alphavantage.co/query?'
         f'function=TIME_SERIES_DAILY&'
         f'symbol={symbol}&'
         f'outputsize={outputsize}&'
         f'apikey={API_KEY}')
-    r = requests.get(url)
     try:
+        r = requests.get(url)
         data = dict(r.json()["Time Series (Daily)"])
     except requests.exceptions.RequestException as e:
-        print(e)    
+        print(e)
+    except KeyError:
+        print("Potential Issue: Did not get an expected json data")
     
     data = pd.DataFrame.from_dict(data, orient='index')
     mapper = lambda col_name: re.sub(r'[1-5]. ', '', col_name)
@@ -37,9 +39,14 @@ def get_daily_price(symbol, outputsize='compact'):
     data.index = pd.to_datetime(data.index)
     data['ohlc_avg'] = (data['open'] + data['high'] + data['low'] + data['close']) / 4
     data['hlc_avg'] = (data['high'] + data['low'] + data['close']) / 3
+    
+    div = get_dividend(symbol)
+    if div is not None:
+        data = data.join(div)
+    
     return data
 
-def get_dividend_info(symbol):
+def get_dividend(symbol):
     url = f'https://www.nasdaq.com/symbol/{symbol.lower()}/dividend-history'
     r = requests.get(url)
     if r.status_code != 200:
@@ -49,7 +56,8 @@ def get_dividend_info(symbol):
     try:
         trs = soup.select("tbody > tr")
     except AttributeError:
-        raise AttributeError("Dividend Info of the symbol not exist.")
+        print("Dividend Info of the symbol not exist.")
+        return None
     
     data_dict = dict()
     for tr in trs:
@@ -62,13 +70,13 @@ def get_dividend_info(symbol):
         }
         data_dict[exdate] = row_data
 
-    df = pd.DataFrame.from_dict(data_dict, orient='index')
-    df.index = pd.to_datetime(df.index)
-    df['decldate'] = pd.to_datetime(df['decldate'], errors='coerce', format='%m/%d/%Y')
-    df['recdate'] = pd.to_datetime(df['recdate'], errors='coerce', format='%m/%d/%Y')
-    df['paydate'] = pd.to_datetime(df['paydate'], errors='coerce', format='%m/%d/%Y')
-    df.sort_index(inplace=True)
-    return df
+    data = pd.DataFrame.from_dict(data_dict, orient='index')
+    data.index = pd.to_datetime(data.index)
+    data['decldate'] = pd.to_datetime(data['decldate'], errors='coerce', format='%m/%d/%Y')
+    data['recdate'] = pd.to_datetime(data['recdate'], errors='coerce', format='%m/%d/%Y')
+    data['paydate'] = pd.to_datetime(data['paydate'], errors='coerce', format='%m/%d/%Y')
+    data.sort_index(inplace=True)
+    return data
 
 def parse_for_data(html, data_dict):
     soup = BeautifulSoup(html, 'html5lib')
@@ -100,19 +108,18 @@ def get_earning_history(symbol):
         WEBDRIVER.implicitly_wait(10)
         html = WEBDRIVER.page_source
         parse_for_data(html, data_dict)
-    df = pd.DataFrame.from_dict(data_dict, orient='index')
-    df.index = pd.to_datetime(df.index, errors='coerce', format='%m/%d/%Y')
-    df['period'] = pd.to_datetime(df['period'], errors='coerce', format='%m/%Y')
-    df[['estimate', 'reported']] = df[['estimate', 'reported']].apply(lambda x: x.str.replace('$', ''))
-    df['surprise_per'] = df['surprise_per'].apply(lambda x: x.replace('%', ''))
+    data = pd.DataFrame.from_dict(data_dict, orient='index')
+    data.index = pd.to_datetime(data.index, errors='coerce', format='%m/%d/%Y')
+    data['period'] = pd.to_datetime(data['period'], errors='coerce', format='%m/%Y')
+    data[['estimate', 'reported']] = data[['estimate', 'reported']].apply(lambda x: x.str.replace('$', ''))
+    data['surprise_per'] = data['surprise_per'].apply(lambda x: x.replace('%', ''))
     num_col = ['estimate', 'reported', 'surprise', 'surprise_per']
-    df[num_col] = df[num_col].apply(pd.to_numeric, errors='coerce’')
-    df['quarter'] = df['period'].apply(lambda d: d.month)
-    df.loc[df['quarter'] == 3, 'quarter'] = 1
-    df.loc[df['quarter'] == 6, 'quarter'] = 2
-    df.loc[df['quarter'] == 9, 'quarter'] = 3
-    df.loc[df['quarter'] == 12, 'quarter'] = 4
+    data[num_col] = data[num_col].apply(pd.to_numeric, errors='coerce’')
+    data['quarter'] = data['period'].apply(lambda d: d.month)
+    data.loc[data['quarter'] == 3, 'quarter'] = 1
+    data.loc[data['quarter'] == 6, 'quarter'] = 2
+    data.loc[data['quarter'] == 9, 'quarter'] = 3
+    data.loc[data['quarter'] == 12, 'quarter'] = 4
     
-    df['year'] = df['period'].apply(lambda d: d.year)
-    return df
-
+    data['year'] = data['period'].apply(lambda d: d.year)
+    return data
