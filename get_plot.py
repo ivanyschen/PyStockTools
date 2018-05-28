@@ -1,7 +1,7 @@
 import numpy as np
 from bokeh.models import ColumnDataSource, LabelSet, Button, HoverTool
 from bokeh.models import CDSView, BooleanFilter, LinearColorMapper, Range1d
-from bokeh.plotting import figure, output_notebook, show
+from bokeh.plotting import figure
 from bokeh.palettes import magma, grey
 from bokeh.transform import transform
 
