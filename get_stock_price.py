@@ -115,3 +115,4 @@ def get_earning_history(symbol):
     
     df['year'] = df['period'].apply(lambda d: d.year)
     return df
+
