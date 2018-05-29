@@ -6,8 +6,8 @@ from bokeh.palettes import magma, grey
 from bokeh.transform import transform
 
 
-def make_price_plot(dataframe, symbol='', add_div=True):
-    source = ColumnDataSource(dataframe)
+def make_price_plot(data, symbol='', add_div=True):
+    source = ColumnDataSource(data)
     plot = figure(
         x_axis_type='datetime',
         plot_height=500,
@@ -33,7 +33,7 @@ def make_price_plot(dataframe, symbol='', add_div=True):
     )
     plot.add_tools(price_hover)
 
-    if 'div_amount' in dataframe.columns and add_div:
+    if 'div_amount' in data.columns and add_div:
         booleans = [not np.isnan(amount) 
             for amount in source.data['div_amount']]
         div_view = CDSView(source=source, filters=[BooleanFilter(booleans)])
@@ -65,8 +65,10 @@ def make_price_plot(dataframe, symbol='', add_div=True):
     plot.legend.click_policy= "mute"
     return plot
 
-def make_div_plot(dataframe, symbol=''):
-    source = ColumnDataSource(dataframe)
+def make_div_plot(data, symbol=''):
+    data['formatted_ex_date'] = \
+        [x.strftime("%Y-%m-%d") for x in data.index]
+    source = ColumnDataSource(data)
     booleans = [not np.isnan(amount) for amount in source.data['div_amount']]
     div_view = CDSView(source=source, filters=[BooleanFilter(booleans)])
     plot = figure(
@@ -86,11 +88,8 @@ def make_div_plot(dataframe, symbol=''):
     hover = HoverTool(
         renderers=[div_circle], 
         tooltips=[
-            ("ex_date", "@decldate{%F}"),
+            ("ex_date", "@formatted_ex_date"),
             ("amount", "@div_amount")],
-        formatters={
-            "ex_date": 'datetime',
-        }
     )
     plot.add_tools(hover)
     plot.title.text = f"{symbol.upper()} Dividend History" if symbol else "Dividend History" 
@@ -101,12 +100,12 @@ def make_div_plot(dataframe, symbol=''):
     plot.ygrid.band_fill_alpha = 0.1
     return plot
 
-def make_earning_plot(dataframe, symbol=''):
-    num_of_year = len(dataframe['year'].unique())
+def make_earning_plot(data, symbol=''):
+    num_of_year = len(data['year'].unique())
     colors = magma(num_of_year)
-    mapper = LinearColorMapper(palette=colors, low=dataframe.year.max(), high=dataframe.year.min())
+    mapper = LinearColorMapper(palette=colors, low=data.year.max(), high=data.year.min())
     
-    source = ColumnDataSource(dataframe)
+    source = ColumnDataSource(data)
     plot = figure(
         x_range=Range1d(0, 5),
         plot_height=500,
