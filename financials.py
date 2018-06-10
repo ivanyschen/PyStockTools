@@ -5,22 +5,22 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def get_income_statement(symbol, type_='quarterly'):
+def get_financial_statement(symbol, statement_type, preriod_type='quarterly'):
     """
     obtain a company's 4 most recent income statements.
     Data source: Nasdaq
 
     Args:
         symbol (str): ticker of a company
-        type_ (str): 'quarterly' or 'annual'
+        statement_type (str): 'income-statement' or 'balance-sheet' or 'cash-flow'
+        preriod_type (str): 'quarterly' or 'annual'
 
     Returns:
         data (pd.DataFrame): data
     """
-    if type_ not in ['quarterly', 'annual']:
-        raise ValueError('type_ should be either "quaterly" or "annual"')
-
-    url = f'https://www.nasdaq.com/symbol/{symbol.lower()}/financials?query=income-statement&data={type_}'
+    if preriod_type not in ['quarterly', 'annual']:
+        raise ValueError('preriod_type should be either "quaterly" or "annual"')
+    url = f'https://www.nasdaq.com/symbol/{symbol.lower()}/financials?query={statement_type}&data={preriod_type}'
     r = requests.get(url)
     if r.status_code != 200:
         r.raise_for_status()
@@ -42,31 +42,4 @@ def get_income_statement(symbol, type_='quarterly'):
         tds = (td.text for td in tr.select('td')[1:] if '$' in td.text)
         for date, val in zip(data_dict.keys(), tds):
             data_dict[date][col_name] = val
-    pprint.pprint(data_dict)
-
-    # # table =s
-    # data_dict = dict()
-    # print(table_div)
-
-
-def get_balance_sheet(symbol, type_='quarterly'):
-    """
-    obtain a company's 4 most recent balance sheets.
-    Data source: Nasdaq
-
-    :param symbol:
-    :param type_:
-    :return:
-    """
-
-
-def get_cashflow_statement(symbol, type_='quarterly'):
-    """
-    obtain a company's 4 most recent cashflow statements.
-    Data source: Nasdaq
-
-    :param symbol:
-    :param type_:
-    :return:
-    """
-    pass
+    return data_dict
