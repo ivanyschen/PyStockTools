@@ -1,5 +1,4 @@
 import re
-import time
 
 import pandas as pd
 import requests
@@ -15,6 +14,7 @@ WEBDRIVER_PATH = config.WEBDRIVER_PATH
 options = Options()
 options.set_headless()
 WEBDRIVER = webdriver.Chrome(WEBDRIVER_PATH, options=options)
+
 
 def get_daily_price(symbol, outputsize='compact', with_div=True):
     url = (
@@ -45,6 +45,7 @@ def get_daily_price(symbol, outputsize='compact', with_div=True):
         data = data.join(div)
     
     return data
+
 
 def get_dividend(symbol):
     url = f'https://www.nasdaq.com/symbol/{symbol.lower()}/dividend-history'
@@ -78,6 +79,7 @@ def get_dividend(symbol):
     data.sort_index(inplace=True)
     return data
 
+
 def parse_for_data(html, data_dict):
     soup = BeautifulSoup(html, 'html5lib')
     trs = soup.find(id='earnings_announcements_earnings_table').select('tbody > tr')
@@ -91,6 +93,7 @@ def parse_for_data(html, data_dict):
             'surprise_per': surprise_per,
             'time': time,
         }
+
 
 def get_earning_history(symbol):
     data_dict = dict()

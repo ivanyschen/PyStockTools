@@ -65,6 +65,7 @@ def make_price_plot(data, symbol='', add_div=True):
     plot.legend.click_policy= "mute"
     return plot
 
+
 def make_div_plot(data, symbol=''):
     data['formatted_ex_date'] = \
         [x.strftime("%Y-%m-%d") for x in data.index]
@@ -100,6 +101,7 @@ def make_div_plot(data, symbol=''):
     plot.ygrid.band_fill_alpha = 0.1
     return plot
 
+
 def make_earning_plot(data, symbol=''):
     num_of_year = len(data['year'].unique())
     colors = magma(num_of_year)
@@ -116,6 +118,7 @@ def make_earning_plot(data, symbol=''):
         y='reported',
         source=source,
         name='reported',
+        legend='Reported',
         size=20,
         color=transform('year', mapper),
         fill_color=transform('year', mapper),
@@ -125,9 +128,11 @@ def make_earning_plot(data, symbol=''):
         y='estimate',
         source=source,
         name='estimated',
+        legend='Estimated',
         size=15,
         color=transform('year', mapper),
         fill_alpha=0.4,
+        muted_alpha=0.1,
     )
     price_hover = HoverTool(
         renderers=[reported],
@@ -147,6 +152,6 @@ def make_earning_plot(data, symbol=''):
     plot.yaxis.axis_label = 'Price'
     plot.ygrid.band_fill_color = "olive"
     plot.ygrid.band_fill_alpha = 0.1
-    plot.legend.click_policy= "mute"
+    plot.legend.click_policy = "mute"
     plot.xaxis.ticker = [1, 2, 3, 4]
     return plot
