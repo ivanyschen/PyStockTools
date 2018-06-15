@@ -42,4 +42,13 @@ def get_financial_statement(symbol, statement_type, preriod_type='quarterly'):
         tds = (td.text for td in tr.select('td')[1:] if '$' in td.text)
         for date, val in zip(data_dict.keys(), tds):
             data_dict[date][col_name] = val
-    return data_dict
+
+    data = pd.DataFrame.from_dict(data_dict, orient='index')
+    data = data[data.columns].apply(lambda x: x.str.replace(r'\$|,', ''))
+    for col in data.columns.tolist():
+        negative_ind = data[col].str.contains(r'\([0-9]+\)')
+        cur_col = data[col].str.replace(r'\(|\)', '')
+        cur_col = cur_col.apply(lambda x: float(x))
+        cur_col[negative_ind] = (-1) * cur_col[negative_ind]
+        data[col] = cur_col
+    return data
