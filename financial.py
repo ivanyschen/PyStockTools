@@ -77,4 +77,7 @@ class FinancialStatement(object):
             cur_col = cur_col.apply(lambda x: float(x))
             cur_col[negative_ind] = (-1) * cur_col[negative_ind]
             data[col] = cur_col
+        data.index = pd.to_datetime(data.index)
+        data.sort_index(inplace=True)
+
         return data
