@@ -1,4 +1,5 @@
 import re
+import datetime
 
 import pandas as pd
 import requests
@@ -95,7 +96,7 @@ def parse_for_data(html, data_dict):
         }
 
 
-def get_earning_history(symbol):
+def get_earning(symbol):
     data_dict = dict()
     url = f'https://www.zacks.com/stock/research/{symbol.lower()}/earnings-announcements'
     WEBDRIVER.get(url)
@@ -125,4 +126,15 @@ def get_earning_history(symbol):
     data.loc[data['quarter'] == 12, 'quarter'] = 4
     
     data['year'] = data['period'].apply(lambda d: d.year)
+    data = data.sort_index()
     return data
+
+
+def get_next_earning(symbol):
+    earning_data = get_earning(symbol)
+    most_recent_date = earning_data.index[-1].to_pydatetime()
+    now = datetime.datetime.now()
+    if most_recent_date < now:
+        print('Incoming earning date has not been announced yet')
+    else:
+        print(f'The next earning date is {most_recent_date}')
